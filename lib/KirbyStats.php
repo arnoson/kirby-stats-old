@@ -114,6 +114,54 @@ class KirbyStats {
   }
 
   /**
+   * Get the host name (without port).
+   * 
+   * @return String
+   */
+  private static function getHost() {
+    return strtok($_SERVER['HTTP_HOST'], ':');
+  }
+
+  /**
+   * Get the referrer's host name (seems to omit the port automatically).
+   * 
+   * @return String
+   */
+  private static function getReferrerHost() {
+    if (isset($_SERVER['HTTP_REFERER'])) {
+      return parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
+    }
+  }
+
+  /**
+   * Check if the page has been refreshed.
+   * 
+   * @return Boolean
+   */
+  private static function isPageRefreshed() {
+    return (
+      isset($_SERVER['HTTP_CACHE_CONTROL']) &&
+      (
+        $_SERVER['HTTP_CACHE_CONTROL'] === 'max-age=0' ||  
+        $_SERVER['HTTP_CACHE_CONTROL'] == 'no-cache'
+      )
+    );  
+  }
+
+  /**
+   * Check if the user is a new visitor by checking if he*she comes from
+   * an external site.
+   * 
+   * @return Boolean
+   */
+  private static function isNewVisitor() {
+    return (
+      !self::isPageRefreshed() &&
+      self::getHost() != self::getReferrerHost()
+    );
+  }
+
+  /**
    * Create the stats page if the plugin is called for the first time.
    */
   public static function init() {
@@ -125,9 +173,16 @@ class KirbyStats {
    */
   public static function log($page) {    
     $pageStats = self::getPageStats($page);
+    $isNewVisitor = self::isNewVisitor();
 
     // Increase total views.
     $viewsTotal = $pageStats->views_total()->value() + 1;
+
+    // Increase visitors.
+    $visitorsTotal = $pageStats->visitors_total()->value();
+    if ($isNewVisitor) {
+      $visitorsTotal++;
+    }
 
     // Get the latest date entry. If latest entry is today, increase it's views,
     // otherwise add a new entry with the current date.
@@ -141,14 +196,19 @@ class KirbyStats {
     ) {
       array_push($dateEntries, [
         'date' => $currentDate,
-        'views' => 1        
+        'views' => 1,
+        'visitors' => $isNewVisitor ? 1 : 0
       ]);
     } else {
       $dateEntries[$lastIndex]['views'] += 1;
+      if ($isNewVisitor) {
+        $dateEntries[$lastIndex]['visitors'] += 1;
+      }
     }
 
     self::updatePage($pageStats, [
       'views_total' => $viewsTotal,
+      'visitors_total' => $visitorsTotal,
       'dates' => Yaml::encode($dateEntries)
     ]);
   } 
