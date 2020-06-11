@@ -1,0 +1,4 @@
+sections:
+  unlisted:
+    type: pages
+    status: unlisted

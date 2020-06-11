@@ -1,0 +1,18 @@
+title: Page Stats
+
+fields:
+  views_total:
+    type: number
+    default: 0
+  visitors_total:
+    type: number
+    default: 0
+  dates:
+    type: structure
+    fields:
+      date:
+        type: text
+      views:
+        type: number
+      visitors:
+        type: number
