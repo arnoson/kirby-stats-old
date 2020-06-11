@@ -1,6 +1,6 @@
 {
   "name": "arnoson/kirby-stats",
-  "description": "Kirby Example Plugin",
+  "description": "Simple and privacy friendly web statistics for Kirby CMS",
   "type": "kirby-plugin",
   "license": "MIT",
   "authors": [
