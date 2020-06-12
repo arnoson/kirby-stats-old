@@ -16,6 +16,6 @@ Kirby::plugin('arnoson/kirby-stats', [
 
   'templates' => [
     'stats' => __DIR__ . '/templates/stats.php',
-    'page-stats' => __DIR__ . '/templates/page-stats.php',
+    'root-stats' => __DIR__ . '/templates/root-stats.php',
   ]
 ]);
