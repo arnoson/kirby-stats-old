@@ -2,6 +2,7 @@
 include_once(__DIR__ . '/helpers.php');
 include_once(__DIR__ . '/Analyzer/ReferrerAnalyzer.php');
 include_once(__DIR__ . '/PageStats.php');
+include_once(__DIR__ . '/Logger/HourlyLogger.php');
 
 use Kirby\Toolkit\Str;
 use Kirby\Data\Yaml;

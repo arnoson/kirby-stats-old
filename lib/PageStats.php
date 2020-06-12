@@ -3,9 +3,10 @@
 namespace KirbyStats; 
 
 include_once(__DIR__ . '/helpers.php');
-include_once(__DIR__ . '/Logger.php');
+include_once(__DIR__ . '/Logger/HourlyLogger.php');
 
 use Kirby\Toolkit\F;
+use \DateTime;
 
 class PageStats {
   private $page;
@@ -19,11 +20,26 @@ class PageStats {
     $this->id = $page->id();
     $this->rootStats = page('kirby-stats');
     $this->stats = $this->getStats();
-    $this->logger = new Logger($this->stats);
+    $this->logger = new HourlyLogger(
+      $this->stats->file('log.csv')->root(),
+      ['visits', 'views']
+    );
   }  
 
-  function log($data) {
-    $this->logger->log($data['view'], $data['visit'], $data['referrer']);
+  function log($analysis) {
+    $this->logger->log([
+      'update' => function($data) use ($analysis) {
+        $data['visits'] += $analysis['view'];
+        $data['views'] += $analysis['visit'];
+        return $data;
+      },
+      'new' => function() use ($analysis) {
+        return [
+          'views' => $analysis['view'],
+          'visits' => $analysis['visit']
+        ];
+      }
+    ]);
   }  
 
   /**
