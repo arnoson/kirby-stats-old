@@ -32,11 +32,12 @@ class IntervalLogger {
     $new = $params['new'] ?? [];
 
     $this->open();
+    $handle = $this->handle;
 
     [
       'line' => $lastLine, 
       'length' => $lineLength
-    ] = $this->getLastLine($this->handle);
+    ] = $this->getLastLine($handle);
 
     $lastLog = $this->decode($lastLine);
     $newLog;
@@ -46,8 +47,8 @@ class IntervalLogger {
       $newLog = is_callable($update) ? $update($lastLog) : $lastLog;
       $newLog['time'] = $lastLog['time'];
       // Delete the old log in the file.
-      $size = fstat($this->handle)['size'] - ($lineLength - 1);
-      ftruncate($this->handle, $size);
+      $size = fstat($handle)['size'] - ($lineLength - 1);
+      ftruncate($handle, $size);
     } else {
       // Create a new log.
       $newLog = is_callable($new) ? $new() : $new;
@@ -55,8 +56,14 @@ class IntervalLogger {
       $newLog['time'] = $time - ($time % $this->interval);
     }
 
-    // Append the new log to the file.
-    fwrite($this->handle, $this->encode($newLog) . "\n");
+    // Make sure the file is ending with a line break.
+    fseek($handle, -1, SEEK_END);
+    $lastChar = fgetc($handle);
+    if ($lastChar !== "\n") {
+      fwrite($handle, "\n");
+    }
+    // Append the new log to the file.  
+    fwrite($handle, $this->encode($newLog) . "\n");
     $this->close();
   }
 
