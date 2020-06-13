@@ -3,7 +3,7 @@
 namespace KirbyStats;
 use \Datetime;
 
-class TimeGroupLogger {
+class IntervalLogger {
   private $file;
   private $handle;
   private $interval;
