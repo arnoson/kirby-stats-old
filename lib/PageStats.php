@@ -27,16 +27,18 @@ class PageStats {
   }  
 
   function log($analysis) {
+    ['view' => $view, 'visit' => $visit] = $analysis;
+
     $this->logger->log([
-      'update' => function($data) use ($analysis) {
-        $data['visits'] += $analysis['view'];
-        $data['views'] += $analysis['visit'];
+      'update' => function($data) use ($view, $visit) {
+        $data['visits'] = (int)$data['visits'] + (int)$view;
+        $data['views'] = (int)$data['views'] + (int)$visit;
         return $data;
       },
-      'new' => function() use ($analysis) {
+      'new' => function() use ($view, $visit) {
         return [
-          'views' => $analysis['view'],
-          'visits' => $analysis['visit']
+          'views' => (int)$view,
+          'visits' => (int)$visit
         ];
       }
     ]);
