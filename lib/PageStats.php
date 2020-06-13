@@ -29,6 +29,11 @@ class PageStats {
   function log($analysis) {
     ['view' => $view, 'visit' => $visit] = $analysis;
 
+    if (!($view || $visit)) {
+      // Nothing to log.
+      return;
+    }
+
     $this->logger->log([
       'update' => function($data) use ($view, $visit) {
         $data['visits'] = (int)$data['visits'] + (int)$view;
