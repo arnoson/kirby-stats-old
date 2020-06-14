@@ -1,6 +1,6 @@
 <?php
 
-namespace KirbyStats;
+namespace KirbyStats; 
 
 /**
  * The Analyzer base class. All inherited classes must implement the isView()
@@ -27,14 +27,14 @@ abstract class Analyzer {
   /**
    * Determin if the the request counst as a visit.
    * 
-   * @return boolean
+   * @return bool
    */
   abstract protected function isVisit();
 
   /**
    * Determin if the the request counst as a view.
    * 
-   * @return boolean
+   * @return bool
    */  
   abstract protected function isView();
 
@@ -61,9 +61,9 @@ abstract class Analyzer {
   /**
    * Check if the page has been refreshed.
    * 
-   * @return boolean
+   * @return bool
    */
-  protected function refreshed(): boolean {
+  protected function refreshed(): bool {
     return $this->refreshed ?? $this->refreshed = (
       isset($_SERVER['HTTP_CACHE_CONTROL']) &&
       (
