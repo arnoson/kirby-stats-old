@@ -59,7 +59,7 @@ class IntervalLogger {
     // Make sure the file is ending with a line break.
     fseek($handle, -1, SEEK_END);
     $lastChar = fgetc($handle);
-    if ($lastChar !== "\n") {
+    if ($lastChar && $lastChar !== "\n") {
       fwrite($handle, "\n");
     }
     // Append the new log to the file.  
