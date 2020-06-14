@@ -2,7 +2,7 @@
 
 namespace KirbyStats;
 
-include_once(__DIR__ . '/Analyzer.php');
+require_once __DIR__ . '/Analyzer.php';
 
 /**
  * The ReferrerAnalyzer analyzes the current request based on the referrer.

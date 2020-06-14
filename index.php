@@ -1,6 +1,6 @@
 <?php
 
-include_once(__DIR__ . '/lib/KirbyStats.php');
+require_once __DIR__ . '/lib/KirbyStats.php';
 
 KirbyStats::init();
 

@@ -1,6 +1,8 @@
 <?php
 
-namespace KirbyStats; 
+namespace KirbyStats;
+
+include_once(__DIR__ . '/../helpers.php');
 
 /**
  * The Analyzer base class. All inherited classes must implement the isView()
@@ -10,6 +12,8 @@ abstract class Analyzer {
   protected $host;
   protected $referrerHost;
   protected $refreshed;
+  protected $userAgent;
+  protected $browser;
 
   /** 
    * Analyze the current request.
@@ -20,7 +24,10 @@ abstract class Analyzer {
     return [
       'visit' => $this->isVisit(),
       'view' => $this->isView(),
-      'referrer' => $this->referrerHost
+      'referrer' => $this->host() !== $this->referrerHost()
+        ? $this->referrerHost()
+        : null,
+      'browser' => $this->browser()
     ];
   }
 
@@ -39,6 +46,27 @@ abstract class Analyzer {
   abstract protected function isView();
 
   /**
+   * Get the user agent.
+   * 
+   * @return string
+   */
+  protected function userAgent(): string {
+    return (
+      $this->userAgent ?? 
+      $this->userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null
+    ); 
+  }
+
+  /**
+   * Get the browser name.
+   * 
+   * @return string
+   */
+  protected function browser(): string {
+    return $this->browser ?? $this->browser = browser_name($this->userAgent());
+  }
+
+  /**
    * Get the host name (without port).
    * 
    * @return string
@@ -50,9 +78,9 @@ abstract class Analyzer {
   /**
    * Get the referrer's host name (seems to omit the port automatically).
    * 
-   * @return string
+   * @return string\null
    */
-  protected function referrerHost(): string {
+  protected function referrerHost() {
     if (isset($_SERVER['HTTP_REFERER'])) {
       return parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
     }

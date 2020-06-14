@@ -2,8 +2,10 @@
 
 namespace KirbyStats; 
 
-include_once(__DIR__ . '/helpers.php');
-include_once(__DIR__ . '/Logger/HourlyLogger.php');
+require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/CounterList.php';
+require_once __DIR__ . '/Logger/HourlyLogger.php';
+require_once __DIR__ . '/Logger/DailyLogger.php';
 
 use Kirby\Toolkit\F;
 use \DateTime;
@@ -35,11 +37,18 @@ class PageStats {
   protected $stats;
 
   /**
-   * The logger used to store the statistics.
+   * The hourly logger used to store views and visits.
    * 
    * @var KirbyStats\HourlyLogger
    */
   protected $logger;
+
+  /**
+   * The daily logger used to store meta data (referrer, browser)
+   * 
+   * @var KirbyStats\DailyLogger
+   */
+  protected $metaLogger;
 
   /**
    * Get property.
@@ -58,10 +67,16 @@ class PageStats {
    */
   function __construct(string $id) {
     $this->id = $id;
+
     $this->logger = new HourlyLogger(
       $this->stats()->file('log.csv')->root(),
       ['views', 'visits']
     );
+
+    $this->metaLogger = new DailyLogger(
+      $this->stats()->file('meta-log.csv')->root(),
+      ['browsers', 'referrers']
+    );    
   }
 
   /**
@@ -90,7 +105,7 @@ class PageStats {
    * @param array $analysis
    */
   public function log(array $analysis) {
-    ['view' => $view, 'visit' => $visit] = $analysis;
+    extract($analysis);
 
     if (!($view || $visit)) {
       // Nothing to log.
@@ -108,7 +123,33 @@ class PageStats {
         'visits' => (int)$visit
       ]
     ]);
-  }  
+
+    $this->metaLogger->log([
+      'update' => function($data) use ($browser, $referrer) {
+        if ($browser) {
+          $data['browsers'] = (new CounterList($data['browsers']))
+            ->increment($browser)
+            ->toString();
+        }
+
+        if ($referrer) {
+          $data['referrers'] = (new CounterList($data['referrers']))
+            ->increment($referrer)
+            ->toString();
+        }
+
+        return $data;
+      },
+      'new' => [
+        'browsers' => $browser
+          ? (new CounterList())->increment($browser)->toString()
+          : '',
+        'referrers' => $referrer
+          ? (new CounterList())->increment($referrer)->toString()
+          : null
+      ]
+    ]);
+  }
 
   /**
    * Find stats for the id.
