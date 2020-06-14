@@ -61,7 +61,7 @@ class KirbyStats {
    * 
    * @param string $id
    */
-  public static function log(string $id): string {
+  public static function log(string $id) {
     $stats = new PageStats($id);
     $stats->log((new ReferrerAnalyzer())->analyze());
   }
