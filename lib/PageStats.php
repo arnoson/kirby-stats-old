@@ -9,15 +9,13 @@ use Kirby\Toolkit\F;
 use \DateTime;
 
 class PageStats {
-  private $page;
   private $id;
   private $rootStats;
   private $stats;
   private $logger;
 
-  function __construct($page) {
-    $this->page = $page;
-    $this->id = $page->id();
+  function __construct($id) {
+    $this->id = $id;
     $this->rootStats = page('kirby-stats');
     $this->stats = $this->getStats();
     $this->logger = new HourlyLogger(
@@ -56,21 +54,18 @@ class PageStats {
    * @param Kirby\Cms\Page $page - The page for which we want to create a stats page
    * @return Kirby\Cms\Page
    */
-  private function createStats($page) {
-    // Get the parent.
-    $parentId = $page->parentId();
-    $parentStats = $parentId
-      ? $this->rootStats->find($parentId)
-      : $this->rootStats;
+  private function createStats($id) {
+    $parent = $this->getParentStats($id);
+    $slug = $this->getSlug($id);
 
     // Create the stats page and publish.
     try {
       super_user();
-      $stats = $parentStats->createChild([
+      $stats = $parent->createChild([
         'content' => [
-          'title' => $page->slug()
+          'title' => $slug
         ],        
-        'slug' => $page->slug(),
+        'slug' => $slug,
         'template' => 'stats'
       ]);
     } catch (Exception $error) {
@@ -93,22 +88,24 @@ class PageStats {
     return $this->rootStats->find($id);
   }
 
-  private function getStats() {
-    // First look if stats aready exist.
-    $stats = $this->findStats($this->id);
+  function getSlug($id) {
+    $parts = explode('/', $id);
+    return array_pop($parts);
+  }
 
-    // If stats doesn't exist we create it, but first we make sure that all
-    // parent's stats also exist.
-    if (!$stats) {
-      $parents = $this->page->parents()->flip();
-      foreach ($parents as $parent) {
-        if (!$this->findStats($parent->id())) {
-          $this->createStats($parent);
-        }
-      }
-      $stats = $this->createStats($this->page); 
-    }     
-  
-    return $stats;
+  function getParentStats($id) {
+    $parts = explode('/', $id);
+    array_pop($parts);
+
+    if (count($parts)) {
+      $parentId = implode('/', $parts);
+      return $this->findStats($parentId) ?? $this->createStats($parentId); 
+    } else {
+      return $this->rootStats;
+    }
+  }
+
+  private function getStats() {
+    return $this->findStats($this->id) ?? $this->createStats($this->id);
   }
 }

@@ -52,8 +52,8 @@ class KirbyStats {
     self::$rootStats = self::getRootStats();
   }
 
-  public static function log($page) {
-    $stats = new PageStats($page);
+  public static function log($id) {
+    $stats = new PageStats($id);
     $stats->log((new ReferrerAnalyzer())->analyze());
   }
 }

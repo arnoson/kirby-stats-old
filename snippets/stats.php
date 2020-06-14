@@ -6,4 +6,4 @@ require_once(__DIR__ . '/../lib/KirbyStats.php');
 // snippet might be called before that so we have to make sure that it is
 // initialized  before we log.
 KirbyStats::init();
-KirbyStats::log($page);
+KirbyStats::log($id ?? $page->id());
