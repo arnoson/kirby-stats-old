@@ -20,7 +20,7 @@ class PageStats {
     $this->stats = $this->getStats();
     $this->logger = new HourlyLogger(
       $this->stats->file('log.csv')->root(),
-      ['visits', 'views']
+      ['views', 'visits']
     );
   }  
 
@@ -34,16 +34,14 @@ class PageStats {
 
     $this->logger->log([
       'update' => function($data) use ($view, $visit) {
-        $data['visits'] = (int)$data['visits'] + (int)$view;
-        $data['views'] = (int)$data['views'] + (int)$visit;
+        $data['views'] = (int)$data['views'] + (int)$view;
+        $data['visits'] = (int)$data['visits'] + (int)$visit;
         return $data;
       },
-      'new' => function() use ($view, $visit) {
-        return [
-          'views' => (int)$view,
-          'visits' => (int)$visit
-        ];
-      }
+      'new' => [
+        'views' => (int)$view,
+        'visits' => (int)$visit
+      ]
     ]);
   }  
 
