@@ -2,18 +2,21 @@
 
 namespace KirbyStats;
 
-class Analyzer {
-  public $host;
-  public $referrerHost;
-  public $refreshed;
-  
-  function __construct() {
-    $this->host = $this->getHost();
-    $this->referrerHost = $this->getReferrerHost();
-    $this->refreshed = $this->isPageRefreshed();
-  }
+/**
+ * The Analyzer base class. All inherited classes must implement the isView()
+ * and isVisit() methods.
+ */
+abstract class Analyzer {
+  protected $host;
+  protected $referrerHost;
+  protected $refreshed;
 
-  function analyze() {
+  /** 
+   * Analyze the current request.
+   * 
+   * @return array
+   */
+  public function analyze(): array {
     return [
       'visit' => $this->isVisit(),
       'view' => $this->isView(),
@@ -22,20 +25,34 @@ class Analyzer {
   }
 
   /**
+   * Determin if the the request counst as a visit.
+   * 
+   * @return boolean
+   */
+  abstract protected function isVisit();
+
+  /**
+   * Determin if the the request counst as a view.
+   * 
+   * @return boolean
+   */  
+  abstract protected function isView();
+
+  /**
    * Get the host name (without port).
    * 
-   * @return String
+   * @return string
    */
-  function getHost() {
-    return strtok($_SERVER['HTTP_HOST'], ':');
+  protected function host(): string {
+    return $this->host ?? $this->host = strtok($_SERVER['HTTP_HOST'], ':');
   }
 
   /**
    * Get the referrer's host name (seems to omit the port automatically).
    * 
-   * @return String
+   * @return string
    */
-  function getReferrerHost() {
+  protected function referrerHost(): string {
     if (isset($_SERVER['HTTP_REFERER'])) {
       return parse_url($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
     }
@@ -44,15 +61,15 @@ class Analyzer {
   /**
    * Check if the page has been refreshed.
    * 
-   * @return Boolean
+   * @return boolean
    */
-  function isPageRefreshed() {
-    return (
+  protected function refreshed(): boolean {
+    return $this->refreshed ?? $this->refreshed = (
       isset($_SERVER['HTTP_CACHE_CONTROL']) &&
       (
         $_SERVER['HTTP_CACHE_CONTROL'] === 'max-age=0' ||  
         $_SERVER['HTTP_CACHE_CONTROL'] == 'no-cache'
       )
-    );  
+    );
   }
 }

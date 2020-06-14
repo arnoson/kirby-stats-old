@@ -11,14 +11,19 @@ use KirbyStats\PageStats;
 use KirbyStats\ReferrerAnalyzer;
 
 class KirbyStats {
-  private static $rootStats;
+  /**
+   * The page in the CMS.
+   * 
+   * @var Kirby\Cms\Page
+   */
+  protected static $rootStats;
 
   /**
-   * Create the root stats page.
+   * Create the root stats.
    * 
    * @return Kirby\Cms\Page
    */
-  private static function createRootStats() {
+  protected static function createRootStats() {
     try {
       super_user();
       $stats = site()->createChild([
@@ -37,22 +42,26 @@ class KirbyStats {
   }
 
   /**
-   * Get the root stats page and create it if it doesn't already exist.
+   * Get the root stats.
    * 
    * @return Kirby\Cms\Page
    */
-  private static function getRootStats() {
-    return page('kirby-stats') ?? self::createRootStats();
+  protected static function rootStats() {
+    return self::$rootStats ?? (
+      self::$rootStats = page('kirby-stats') ?? self::createRootStats()
+    );
+  }
+
+  public static function init() {
+    self::$rootStats = self::rootStats();
   }
 
   /**
-   * Create the root stats page if the plugin is called for the first time.
+   * Log the current request.
+   * 
+   * @param string $id
    */
-  public static function init() {
-    self::$rootStats = self::getRootStats();
-  }
-
-  public static function log($id) {
+  public static function log(string $id) {
     $stats = new PageStats($id);
     $stats->log((new ReferrerAnalyzer())->analyze());
   }
