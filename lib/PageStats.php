@@ -8,6 +8,7 @@ require_once __DIR__ . '/Logger/HourlyLogger.php';
 require_once __DIR__ . '/Logger/DailyLogger.php';
 
 use Kirby\Toolkit\F;
+use Kirby\Toolkit\Dir;
 use \DateTime;
 
 /**
@@ -23,22 +24,7 @@ class PageStats {
   protected $id;
 
   /**
-   * The plugin's root page in the CMS.
-   * 
-   * @var Kibry\Cms\Page
-   */
-  protected $rootStats;
-
-  /**
-   * The page in the CMS.
-   * 
-   * @var Kirby\Cms\Page
-   */
-  protected $stats;
-
-
-  /**
-   * The page's directory.
+   * The directory where the stats are stored.
    * 
    * @var string
    */
@@ -70,12 +56,13 @@ class PageStats {
    */
   public function log(array $analysis) {
     extract($analysis);
-    if ($view || $visit) {
+
+    // if ($view || $visit) {
       $this->logHourly($analysis);
-    }
-    if ($visit) {
+    // }
+    // if ($visit) {
       $this->logDaily($analysis);
-    }
+    // }
   }
 
   /**
@@ -135,113 +122,22 @@ class PageStats {
   }
 
   /**
-   * Get the page's directory.
+   * Get the contents's directory.
    * 
    * @return string
    */
   protected function dir() {
-    return (
-      $this->dir ??
-      $this->dir = kirby()->root('content') . '/' . $this->stats()->diruri()
-    );
-  }
-
-  /**
-   * Get the rootStats page.
-   * 
-   * @return Kirby\Cms\Page
-   */
-  public function rootStats() {
-    return $this->rootStats ?? $this->rootStats = page('kirby-stats');
-  }
-
-  /**
-   * If provided with an id get the id's slug. Otherwise get the slug. 
-   * 
-   * @param string $id
-   * @return string
-   */
-  private function slug(string $id = null): string {
-    $parts = explode('/', $id ?? $this->id);
-    return array_pop($parts);
-  }
-
-  /**
-   * Find stats for the id.
-   * 
-   * @param string $id
-   * @return Kirby\Cms\Page|null
-   */
-  private function findStats(string $id) {
-    return $this->rootStats()->find($id);
-  }  
-
-  /**
-   * If provided with an id get the id's stats. Otherwise get the stats.
-   * 
-   * @param string $id
-   * @return Kirby\Cms\Page
-   */
-  public function stats(string $id = null) {
-    if ($id !== null) {
-      return $this->findStats($id) ?? $this->createStats($id);
+    if ($this->dir) {
+      return $this->dir;
     }
 
-    if ($this->stats !== null) {
-      return $this->stats;
+    $rootDir = option('arnoson.kirby-stats.dir');
+    $dir = kirby()->root('index') . "/$rootDir/pages/" . $this->id();
+    if (!Dir::exists($dir)) {
+      Dir::make($dir);
     }
 
-    $id = $this->id;
-    return $this->stats = $this->findStats($id) ?? $this->createStats($id);
-  }
-
-  /**
-   * If provided with an id get the id's parent's stats. Otherwise get the
-   * parent's stats.
-   * 
-   * @param string $id
-   * @return Kirby\Cms\Page 
-   */
-  public function parentStats(string $id = null) {
-    $parts = explode('/', $id ?? $this->id);
-    array_pop($parts);
-
-    if (count($parts)) {
-      $parentId = implode('/', $parts);
-      return $this->findStats($parentId) ?? $this->createStats($parentId); 
-    } else {
-      return $this->rootStats;
-    }    
-  }
-
-  /**
-   * Create a new stats page in the CMS. We use the page as a container for
-   * our log files, where the actual data is stored.
-   * 
-   * @param string $id
-   * @return Kirby\Cms\Page
-   */
-  protected function createStats(string $id) {
-    $parent = $this->parentStats($id);
-    $slug = $this->slug($id);
-
-    // Create the stats page and publish.
-    try {
-      super_user();
-      $stats = $parent->createChild([
-        'content' => [
-          'title' => $slug
-        ],        
-        'slug' => $slug,
-        'template' => 'stats'
-      ]);
-    } catch (Exception $error) {
-      throw new Exception($error);
-    }
-    super_user();
-    $stats = $stats->publish();
-
-    return $stats;    
+    return $this->dir = $dir;
   }
 
   /**

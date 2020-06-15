@@ -1,10 +1,10 @@
 <?php
 
-require_once __DIR__ . '/lib/KirbyStats.php';
-
-KirbyStats::init();
-
 Kirby::plugin('arnoson/kirby-stats', [
+  'options' => [
+    'dir' => 'stats'
+  ],
+
   'snippets' => [
     'stats' => __DIR__ . '/snippets/stats.php'
   ],
