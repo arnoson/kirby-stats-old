@@ -72,6 +72,8 @@ class PageStats {
     extract($analysis);
     if ($view || $visit) {
       $this->logHourly($analysis);
+    }
+    if ($visit) {
       $this->logDaily($analysis);
     }
   }
