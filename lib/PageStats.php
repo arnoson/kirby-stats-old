@@ -36,19 +36,13 @@ class PageStats {
    */
   protected $stats;
 
-  /**
-   * The hourly logger used to store views and visits.
-   * 
-   * @var KirbyStats\HourlyLogger
-   */
-  protected $logger;
 
   /**
-   * The daily logger used to store meta data (referrer, browser)
+   * The page's directory.
    * 
-   * @var KirbyStats\DailyLogger
+   * @var string
    */
-  protected $metaLogger;
+  protected $dir;
 
   /**
    * Get property.
@@ -66,38 +60,8 @@ class PageStats {
    * @param string $id
    */
   function __construct(string $id) {
-    $this->id = $id;
-
-    $this->logger = new HourlyLogger(
-      $this->stats()->file('log.csv')->root(),
-      ['views', 'visits']
-    );
-
-    $this->metaLogger = new DailyLogger(
-      $this->stats()->file('meta-log.csv')->root(),
-      ['browsers', 'referrers']
-    );    
+    $this->id = $id;  
   }
-
-  /**
-   * Get the rootStats page.
-   * 
-   * @return Kirby\Cms\Page
-   */
-  public function rootStats() {
-    return $this->rootStats ?? $this->rootStats = page('kirby-stats');
-  }
-
-  /**
-   * If provided with an id get the id's slug. Otherwise get the slug. 
-   * 
-   * @param string $id
-   * @return string
-   */
-  private function slug(string $id = null): string {
-    $parts = explode('/', $id ?? $this->id);
-    return array_pop($parts);
-  }  
 
   /**
    * Log the current request.
@@ -106,13 +70,21 @@ class PageStats {
    */
   public function log(array $analysis) {
     extract($analysis);
-
-    if (!($view || $visit)) {
-      // Nothing to log.
-      return;
+    if ($view || $visit) {
+      $this->logHourly($analysis);
+      $this->logDaily($analysis);
     }
+  }
 
-    $this->logger()->log([
+  /**
+   * Log the hourly data (views and visits).
+   * 
+   * @param array $analysis
+   */
+  protected function logHourly(array $analysis) {
+    extract($analysis);
+
+    $this->loggerHourly()->log([
       'update' => function($data) use ($view, $visit) {
         $data['views'] = (int)$data['views'] + (int)$view;
         $data['visits'] = (int)$data['visits'] + (int)$visit;
@@ -122,9 +94,18 @@ class PageStats {
         'views' => (int)$view,
         'visits' => (int)$visit
       ]
-    ]);
+    ]);    
+  }
 
-    $this->metaLogger->log([
+  /**
+   * Log the daily data (browser and referrers).
+   * 
+   * @param array $analysis
+   */
+  protected function logDaily(array $analysis) {
+    extract($analysis);
+    
+    $this->loggerDaily()->log([
       'update' => function($data) use ($browser, $referrer) {
         if ($browser) {
           $data['browsers'] = (new CounterList($data['browsers']))
@@ -148,7 +129,39 @@ class PageStats {
           ? (new CounterList())->increment($referrer)->toString()
           : null
       ]
-    ]);
+    ]);    
+  }
+
+  /**
+   * Get the page's directory.
+   * 
+   * @return string
+   */
+  protected function dir() {
+    return (
+      $this->dir ??
+      $this->dir = kirby()->root('content') . '/' . $this->stats()->diruri()
+    );
+  }
+
+  /**
+   * Get the rootStats page.
+   * 
+   * @return Kirby\Cms\Page
+   */
+  public function rootStats() {
+    return $this->rootStats ?? $this->rootStats = page('kirby-stats');
+  }
+
+  /**
+   * If provided with an id get the id's slug. Otherwise get the slug. 
+   * 
+   * @param string $id
+   * @return string
+   */
+  private function slug(string $id = null): string {
+    $parts = explode('/', $id ?? $this->id);
+    return array_pop($parts);
   }
 
   /**
@@ -226,13 +239,40 @@ class PageStats {
     super_user();
     $stats = $stats->publish();
 
-    // Add our log file. There we will store the stats for the page.
-    // We could also store it in the stats page directly, but using a dedicated 
-    // csv file is much more efficient.
-    $statsDir = kirby()->root('content') . '/' . $stats->diruri();
-    F::write($statsDir . '/log.csv', '');
-    F::write($statsDir . '/meta-log.csv', '');
-
     return $stats;    
   }
+
+  /**
+   * Create an hourly log file for the current month (if it doesn't already
+   * exist) and return a new hourly logger.
+   * 
+   * @return KirbyStats\HourlyLogger
+   */
+  protected function loggerHourly() {
+    $month = (new DateTime())->format('Y-m');
+    $file = "{$this->dir()}/$month-hourly.csv";
+
+    if (!F::exists($file)) {
+      F::write($file, '');
+    }
+
+    return new HourlyLogger($file, ['views', 'visits']);
+  }
+
+  /**
+   * Create a daily log file for the current month (if it doesn't already
+   * exist) and return a new daily logger.
+   * 
+   * @return KirbyStats\HourlyLogger
+   */
+  protected function loggerDaily() {
+    $month = (new DateTime())->format('Y-m');
+    $file = "{$this->dir()}/$month-daily.csv";
+
+    if (!F::exists($file)) {
+      F::write($file, '');
+    }
+
+    return new DailyLogger($file, ['browsers', 'referrers']);
+  }    
 }
