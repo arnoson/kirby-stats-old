@@ -17,5 +17,16 @@ Kirby::plugin('arnoson/kirby-stats', [
   'templates' => [
     'stats' => __DIR__ . '/templates/stats.php',
     'root-stats' => __DIR__ . '/templates/root-stats.php',
+  ],
+
+  'api' => [
+    'routes' => [
+      [
+        'pattern' => 'stats',
+        'action' => function() {
+          return json_encode(['test' => 'hallo!!']);
+        }
+      ]
+    ]
   ]
 ]);
