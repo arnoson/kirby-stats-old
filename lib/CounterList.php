@@ -66,6 +66,15 @@ class CounterList {
   }
 
   /**
+   * Convert counters to array.
+   * 
+   * @return array
+   */  
+  public function toArray(): array {
+    return $this->data;
+  }
+
+  /**
    * Decode string.
    * 
    * @param string $string

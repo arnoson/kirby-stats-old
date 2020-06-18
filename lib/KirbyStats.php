@@ -21,4 +21,8 @@ class KirbyStats {
     $stats = new PageStats($id);
     $stats->log((new ReferrerAnalyzer())->analyze());
   }
+
+  public static function stats(string $id) {
+    return new PageStats($id);
+  }
 }

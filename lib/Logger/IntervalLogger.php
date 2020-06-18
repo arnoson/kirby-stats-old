@@ -68,6 +68,30 @@ class IntervalLogger {
   }
 
   /**
+   * Read and return the log entries. Note: this reads the whole file, which
+   * might no be a good solution for large log files.
+   * 
+   * @param bool convertNumerics - Wether or not to convert numeric values to 
+   * (float) numbers.
+   * @return array
+   */
+  public function read(bool $convertNumerics = true): array {
+    $fields = $this->fields;
+    $logs = array_map('str_getcsv', file($this->file));
+    array_walk($logs, function(&$log) use ($fields, $convertNumerics) {
+      if ($convertNumerics) {
+        foreach ($log as &$value) {
+          if (is_numeric($value)) {
+            $value = (float) $value;
+          }
+        }
+      }
+      $log = array_combine($fields, $log);
+    });
+    return $logs;
+  }
+
+  /**
    * Open the log file.
    */
   private function open() {
@@ -114,10 +138,7 @@ class IntervalLogger {
     if (!empty($string)) {
       $data = [];
       $values = explode(',', $string);
-      foreach ($this->fields as $index => $field) {
-        $data[$field] = $values[$index] ?? null;
-      }
-      return $data;
+      return array_combine($this->fields, $values);
     }
   }
 
