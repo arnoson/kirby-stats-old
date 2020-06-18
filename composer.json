@@ -10,6 +10,7 @@
     }
   ],
   "require": {
-      "getkirby/composer-installer": "^1.1"
+    "getkirby/composer-installer": "^1.1",
+    "cbschuld/browser.php": "^1.9"
   }
 }

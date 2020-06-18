@@ -2,7 +2,7 @@
 
 namespace KirbyStats;
 
-include_once(__DIR__ . '/../helpers.php');
+require_once __DIR__ . '/../BrowserInfo.php';
 
 /**
  * The Analyzer base class. All inherited classes must implement the isView()
@@ -27,7 +27,7 @@ abstract class Analyzer {
       'referrer' => $this->host() !== $this->referrerHost()
         ? $this->referrerHost()
         : null,
-      'browser' => $this->browser()
+      'browser' => $this->browser(),
     ];
   }
 
@@ -58,12 +58,15 @@ abstract class Analyzer {
   }
 
   /**
-   * Get the browser name.
+   * Get the browser info.
    * 
-   * @return string
+   * @return array|null
    */
-  protected function browser(): string {
-    return $this->browser ?? $this->browser = browser_name($this->userAgent());
+  protected function browser() {
+    return (
+      $this->browser ??
+      $this->browser = (new BrowserInfo($this->userAgent()))->toArray()
+    );
   }
 
   /**

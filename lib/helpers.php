@@ -5,45 +5,40 @@ function super_user() {
 }
 
 /**
- * Get the browser name.
- * @see http://stackoverflow.com/a/20934782/4255615
- * @return string
+ * Get all logs in the specified period.
+ * 
+ * @param array $logs
+ * @param DateTimeInterface $from - Start of the period.
+ * @param DateTimeInterface $to - End of the period.
  */
-function browser_name(string $userAgent = null): string {
-  $userAgent = $userAgent ?? $_SERVER['HTTP_USER_AGENT'];
+function logs_in_period(array $logs, $from, $to): array {
+  $fromTimestamp = $from->getTimestamp();
+  $toTimestamp = $to->getTimestamp();
 
-  if (
-    strpos(strtolower($userAgent), 'safari/') &&
-    strpos(strtolower($userAgent), 'opr/')
-  ) {
-    // Opera
-    $result = 'Opera';
-  } elseif (
-    strpos(strtolower($userAgent), 'safari/') &&
-    strpos(strtolower($userAgent), 'chrome/')
-  ) {
-    // Chrome
-    $result = 'Chrome';
-  } elseif (
-    strpos(strtolower($userAgent), 'msie') ||
-    strpos(strtolower($userAgent), 'trident/')
-  ) {
-    // Internet Explorer
-    $result = 'Internet Explorer';
-  } elseif (strpos(strtolower($userAgent), 'firefox/')) {
-    // Firefox
-    $result = 'Firefox';
-  } elseif (
-    strpos(strtolower($userAgent), 'safari/') &&
-    (strpos(strtolower($userAgent), 'opr/') === false) &&
-    (strpos(strtolower($userAgent), 'chrome/') === false)
-  ) {
-    // Safari
-    $result = 'Safari';
-  } else {
-    // Out of data
-    $result = false;
+  // The logs are sorted chronologically, so instead of looping over the whole
+  // array we first remove the redundant logs from the beginning.
+  $removeCount = 0;
+  $count = count($logs);
+  for ($i = 0; $i < $count; $i++) {
+    if ($logs[$i]['time'] < $fromTimestamp) {
+      $removeCount++;
+    } else {
+      break;
+    }
   }
+  array_splice($logs, 0, $removeCount);
 
-  return $result;
+  // Then we remove the redundant logs from the end.
+  $removeCount = 0;
+  $count = count($logs);
+  for ($i = $count - 1; $i >= 0; $i--) {
+    if ($logs[$i]['time'] >= $toTimestamp) {
+      $removeCount++;
+    } else {
+      break;
+    }
+  }
+  array_splice($logs, count($logs) - $removeCount);  
+
+  return $logs;
 }

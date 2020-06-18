@@ -61,26 +61,38 @@ class PageStats {
   public function log(array $analysis) {
     extract($analysis);
 
+    // TODO: remove (only for debugging)
+    // $visit = true;
+
+    $time = (new DateTime)->getTimestamp();
+
     // If therer is neither a visit nor a view there is nothing to lock.
     if ($view || $visit) {
-      $this->logHourly($analysis);
+      $this->logHourly($time, $analysis);
     }
     // Only log the daily data (browser and referrer) for new visits. Otherwise
     // it would distort the statistics.
     if ($visit) {
-      $this->logDaily($analysis);
+      $this->logDaily($time, $analysis);
     }
   }
 
   /**
    * Log the hourly data (views and visits).
    * 
+   * @param int $time - The timestamp.
    * @param array $analysis
    */
-  protected function logHourly(array $analysis) {
-    extract($analysis);
+  protected function logHourly(int $time, array $analysis) {
+    $view = $analysis['view'] ?? null;
+    $visit = $analysis['visit'] ?? null;
 
-    $this->loggerHourly()->log([
+    $date = (new DateTime)->setTimestamp($time);
+    $year = $date->format('Y');
+    $month = $date->format('n');
+
+    $this->loggerHourly($year, $month)->log([
+      'time' => $time,
       'update' => function($data) use ($view, $visit) {
         $data['views'] = (int)$data['views'] + (int)$view;
         $data['visits'] = (int)$data['visits'] + (int)$visit;
@@ -96,16 +108,23 @@ class PageStats {
   /**
    * Log the daily data (browser and referrers).
    * 
+   * @param int $time - The timestamp.
    * @param array $analysis
    */
-  protected function logDaily(array $analysis) {
-    extract($analysis);
+  protected function logDaily(int $time, array $analysis) {
+    $browser = $analysis['browser'] ?? null;
+    $referrer = $analysis['referrer'] ?? null;
 
-    $this->loggerDaily()->log([
+    $date = (new DateTime)->setTimestamp($time);
+    $year = $date->format('Y');
+    $month = $date->format('n'); 
+
+    $this->loggerDaily($year, $month)->log([
+      'time' => $time,
       'update' => function($data) use ($browser, $referrer) {
         if ($browser) {
           $data['browsers'] = (new CounterList($data['browsers']))
-            ->increment($browser['short_name'])
+            ->increment($browser['id'])
             ->toString();
         }
 
@@ -119,7 +138,7 @@ class PageStats {
       },
       'new' => [
         'browsers' => $browser
-          ? (new CounterList())->increment($browser['short_name'])->toString()
+          ? (new CounterList())->increment($browser['id'])->toString()
           : '',
         'referrers' => $referrer
           ? (new CounterList())->increment($referrer)->toString()

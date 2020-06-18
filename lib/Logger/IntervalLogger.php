@@ -2,6 +2,7 @@
 
 namespace KirbyStats;
 use \Datetime;
+use \Error;
 
 class IntervalLogger {
   private $file;
@@ -43,6 +44,10 @@ class IntervalLogger {
     $newLog;
 
     if ($lastLog && $time < $lastLog['time'] + $this->interval) {
+      if ($time < $lastLog['time']) {
+        // The logs are added chronologically, so this shouldn't happen at all.
+        throw new Error('The new log must be newer than the last log.');
+      }
       // The last log covers the current time, so we update it.
       $newLog = is_callable($update) ? $update($lastLog) : $lastLog;
       $newLog['time'] = $lastLog['time'];
