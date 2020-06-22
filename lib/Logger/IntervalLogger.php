@@ -82,17 +82,33 @@ class IntervalLogger {
    */
   public function read(bool $convertNumerics = true): array {
     $fields = $this->fields;
-    $logs = array_map('str_getcsv', file($this->file));
-    array_walk($logs, function(&$log) use ($fields, $convertNumerics) {
+
+    $logs = [];
+    $lines = file($this->file);
+    foreach($lines as $line) {
+      $log = array_combine($fields, str_getcsv($line));
       if ($convertNumerics) {
         foreach ($log as &$value) {
           if (is_numeric($value)) {
             $value = (float) $value;
           }
         }
-      }
-      $log = array_combine($fields, $log);
-    });
+      }      
+      $logs[$log['time']] = array_combine($fields, $log);
+    }
+
+    // $logs = array_map('str_getcsv', file($this->file));
+    // array_walk($logs, function(&$log) use ($fields, $convertNumerics) {
+    //   if ($convertNumerics) {
+    //     foreach ($log as &$value) {
+    //       if (is_numeric($value)) {
+    //         $value = (float) $value;
+    //       }
+    //     }
+    //   }
+    //   $log = array_combine($fields, $log);
+    // });
+
     return $logs;
   }
 

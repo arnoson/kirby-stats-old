@@ -165,26 +165,29 @@ class PageStats {
     // Create the interval between the two dates.
     $from = new DateTime($fromDate);
     $to = new DateTime($toDate);
+    $fromTimestamp = $from->getTimestamp();
+    $toTimestamp = $to->getTimestamp();
     $period =  new DatePeriod(
       (clone $from)->modify('first day of this month'),
       DateInterval::createFromDateString('1 month'),
       (clone $to)->modify('first day of next month'),
     );
     
-    // Loop through the months and add the logs to the result.
-    $hourly = [];
-    $daily = [];    
+    $result = [];
     foreach ($period as $date) {
       $logs = $this->getMonthLogs($date->format('Y'), $date->format('n'));
-      $hourly = array_merge($hourly, $logs['hourly']);
-      $daily = array_merge($daily, $logs['daily']);
+      // Add hourly and daily logs to the result.
+      foreach ($logs as $type => $logs) {
+        $result[$type] = [];
+        foreach ($logs as $time => $log) {
+          if ($log['time'] >= $fromTimestamp && $log['time'] < $toTimestamp) {
+            $result[$type][$log['time']] = $log;
+          }
+        }         
+      }
     }
 
-    // Remove the redundant logs and return the result.
-    return [
-      'hourly' => logs_in_period($hourly, $from, $to),
-      'daily' => logs_in_period($daily, $from, $to)
-    ];
+    return $result;
   }
 
   protected function getMonthLogs(int $year, int $month) {
