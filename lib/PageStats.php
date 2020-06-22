@@ -153,7 +153,9 @@ class PageStats {
    * @param string $from - The start date `Y-m-d`.
    * @param string $from - The end date `Y-m-d`.
    */
-  public function logs(string $fromDate, string $toDate = null): array {
+  public function logs(
+    string $fromDate, string $toDate, string $resolution
+  ): array {
     // Validate dates.
     if (!V::date($fromDate)) {
       throw new Exception();
@@ -173,21 +175,43 @@ class PageStats {
       (clone $to)->modify('first day of next month'),
     );
     
-    $result = [];
+    $daily = [];
+    $hourly = [];
+
     foreach ($period as $date) {
       $logs = $this->getMonthLogs($date->format('Y'), $date->format('n'));
-      // Add hourly and daily logs to the result.
-      foreach ($logs as $type => $logs) {
-        $result[$type] = [];
-        foreach ($logs as $time => $log) {
-          if ($log['time'] >= $fromTimestamp && $log['time'] < $toTimestamp) {
-            $result[$type][$log['time']] = $log;
+
+      // Add daily logs to the result.
+      foreach ($logs['daily'] as $time => $log) {
+        if ($time >= $fromTimestamp && $time < $toTimestamp) {
+          $daily[$time] = $log;
+        }
+      }
+
+      // Add hourly logs.
+      $secondsInDay = 60 * 60 * 24;
+      foreach ($logs['hourly'] as $time => $log) {
+        if ($time >= $fromTimestamp && $time < $toTimestamp) {
+          if ($resolution === 'hourly') {
+            // Resolution is `hourly` so we can just add them to the result.
+            $hourly[$time] = $log;
+          } else if ($resolution === 'daily') {
+            // Resolution is `daily` so we have to reduce all hourly results
+            // of one day and add them to the daily log.
+            $dayTime = $time - ($time % $secondsInDay);
+            $day = $daily[$dayTime] ?? [];
+            $day['views'] = ($day['views'] ?? 0) + $log['views'];
+            $day['visits'] = ($dayLog['visits'] ?? 0) + $log['views'];
+            $daily[$dayTime] = $day;
           }
-        }         
+        }        
       }
     }
 
-    return $result;
+    return [
+      'hourly' => $hourly,
+      'daily' => $daily
+    ];
   }
 
   protected function getMonthLogs(int $year, int $month) {
