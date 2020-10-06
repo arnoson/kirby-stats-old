@@ -200,8 +200,9 @@ class PageStats {
             // of one day and add them to the daily log.
             $dayTime = $time - ($time % $secondsInDay);
             $day = $daily[$dayTime] ?? [];
+            // dump($log);
             $day['views'] = ($day['views'] ?? 0) + $log['views'];
-            $day['visits'] = ($dayLog['visits'] ?? 0) + $log['views'];
+            $day['visits'] = ($day['visits'] ?? 0) + $log['visits'];
             $daily[$dayTime] = $day;
           }
         }        

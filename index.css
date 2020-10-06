@@ -612,9 +612,26 @@
     top: 0;
     left: 0; }
 
-/*# sourceMappingURL=chartist.css.map */.chart .ct-line {
+/*# sourceMappingURL=chartist.css.map */.kirbystats-chart {
+  height: 50vh;
+}
+.kirbystats-chart .ct-line {
   stroke-width: 2px;
 }
-.chart .ct-point {
-  stroke-width: 6px;
+.kirbystats-chart .ct-point {
+  stroke-width: 20px;
+  stroke: transparent;
+}
+.kirbystats-chart .ct-point:hover {
+  stroke: inherit;
+  stroke-width: 8px;
+}
+.kirbystats-chart .ct-series-views,
+.kirbystats-chart .ct-series-visits {
+  stroke: #4271ae;
+  fill: #4271ae;
+}
+.kirbystats-chart .ct-series-views .ct-area,
+.kirbystats-chart .ct-series-visits .ct-area {
+  fill-opacity: 0.2;
 }
